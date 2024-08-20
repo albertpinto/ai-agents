@@ -10,29 +10,35 @@ const Chatbot = () => {
   const handleSend = async () => {
     if (inputValue.trim() !== '') {
       const url = `${serverUrl}/prompt/${inputValue}`;
+      
       try {
         const response = await fetch(url);
+        console.log(url);
+        console.log(response);
+        
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const botResponseJson = await response.json();
-        if (botResponseJson.error) {
-          throw new Error(`Error: ${botResponseJson.error}`);
-        }
 
-        const botResponseText = botResponseJson // Accessing the 'response' field from the JSON
-        const delimiter = "Critique agent's response:";
-        const [agentsResponse, critique] = botResponseText.split(delimiter).map(part => part.trim());
-        setMessages([...messages,
+        const data = await response.json();
+        console.log(data.prompt);
+        const botResponse = data.prompt || "No response from bot";
+
+        setMessages(prevMessages => [
+          ...prevMessages,
           { text: inputValue, type: 'user' },
-          { text: "Agent's reponse:" + agentsResponse, type: 'bot' }, // Using the extracted 'response' value
-          { text: "Critic Agent's Reponse:"+ critique, type: 'bot' } 
+          { text: `Agent's response: ${botResponse}`, type: 'bot' }
         ]);
       } catch (error) {
         console.error("Fetching error:", error);
-  }
+        setMessages(prevMessages => [
+          ...prevMessages,
+          { text: "Error: Failed to fetch response from the server.", type: 'bot' }
+        ]);
+      }
+
+      setInputValue('');
     }
-    setInputValue('');
   };
   
   const handleClear = () => {
